@@ -116,7 +116,7 @@ const responseFormat = {
 };
 
 // ── Call OpenAI ──
-async function callOpenAI(messages, useStructured = true) {
+async function callOpenAI(messages, extraParams = {}) {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -126,8 +126,8 @@ async function callOpenAI(messages, useStructured = true) {
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages,
-      ...(useStructured ? { response_format: responseFormat } : { tools, tool_choice: 'auto' }),
       max_tokens: 500,
+      ...extraParams,
     }),
   });
   return res.json();
@@ -256,45 +256,31 @@ export default function ChatBot() {
       const context = retrieveContext(userMsg);
       const systemPrompt = buildSystemPrompt(context);
       const newHistory = [...history, { role: 'user', content: userMsg }];
+      const msgs = [{ role: 'system', content: systemPrompt }, ...newHistory];
 
-      // Step 1: check for function calls (no structured output)
-      const data = await callOpenAI([
-        { role: 'system', content: systemPrompt },
-        ...newHistory,
-      ], false);
-
+      // Single call with both tools and structured output support
+      const data = await callOpenAI(msgs, { tools, tool_choice: 'auto', response_format: responseFormat });
       const choice = data.choices?.[0];
       let finalText;
 
       if (choice?.message?.tool_calls) {
-        // Function calling path
+        // Function calling — one extra call needed to get the answer
         const toolCall = choice.message.tool_calls[0];
-        const args = JSON.parse(toolCall.function.arguments);
-        const result = filterProjectsByTech(args);
-
+        const result = filterProjectsByTech(JSON.parse(toolCall.function.arguments));
         const toolMessages = [
           ...newHistory,
           choice.message,
           { role: 'tool', tool_call_id: toolCall.id, content: JSON.stringify(result) },
         ];
-
-        // Step 2: get structured output after function result
-        const data2 = await callOpenAI([
-          { role: 'system', content: systemPrompt },
-          ...toolMessages,
-        ], true);
-
+        const data2 = await callOpenAI(
+          [{ role: 'system', content: systemPrompt }, ...toolMessages],
+          { response_format: responseFormat }
+        );
         const parsed = JSON.parse(data2.choices?.[0]?.message?.content || '{}');
         finalText = parsed.answer || 'לא הצלחתי למצוא תשובה.';
         setHistory([...toolMessages, { role: 'assistant', content: finalText }]);
       } else {
-        // Structured output path
-        const data2 = await callOpenAI([
-          { role: 'system', content: systemPrompt },
-          ...newHistory,
-        ], true);
-
-        const parsed = JSON.parse(data2.choices?.[0]?.message?.content || '{}');
+        const parsed = JSON.parse(choice?.message?.content || '{}');
         finalText = parsed.answer || 'לא הצלחתי למצוא תשובה.';
         setHistory([...newHistory, { role: 'assistant', content: finalText }]);
         if (!open) setUnread((n) => n + 1);
