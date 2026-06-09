@@ -1,50 +1,155 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import emailjs from '@emailjs/browser';
+import { projectsData } from '../data/projects';
 
-// ── Knowledge base — English + Hebrew ──
-const knowledge = {
-  greetings: ['hi', 'hello', 'hey', 'sup', 'yo', 'שלום', 'היי', 'הי', 'מה נשמע', 'מה קורה'],
-  about: ['who', 'about', 'yourself', 'tell me', 'shira', 'you', 'מי', 'אודות', 'ספרי', 'שירה', 'על עצמך'],
-  skills: ['skill', 'tech', 'technolog', 'know', 'stack', 'language', 'use', 'work with', 'כישור', 'טכנולוגי', 'יודע', 'יודעת', 'stack', 'במה', 'עובד', 'עובדת', 'שפות תכנות'],
-  projects: ['project', 'built', 'portfolio', 'made', 'develop', 'פרויקט', 'בנתה', 'עבודות', 'portfolio', 'פרויקטים'],
-  experience: ['experience', 'job', 'tax', 'practicum', 'intern', 'ניסיון', 'עבודה', 'מס הכנסה', 'פרקטיקום', 'תפקיד'],
-  education: ['education', 'study', 'school', 'degree', 'grade', 'learn', 'seminar', 'לימודים', 'בית ספר', 'תואר', 'ציון', 'ממוצע', 'לומדת'],
-  contact: ['contact', 'email', 'reach', 'hire', 'linkedin', 'touch', 'קשר', 'מייל', 'איך', 'ליצור', 'linkedin'],
-  certifications: ['certif', 'course', 'ux', 'security', 'תעודה', 'קורס', 'הסמכה'],
-  grade: ['grade', 'average', 'score', '98', 'ציון', 'ממוצע', 'ציונים'],
-  hire: ['hire', 'available', 'freelance', 'work together', 'זמינה', 'פנויה', 'שיתוף פעולה', 'לשכור'],
-};
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
-const responses = {
-  greetings: "היי! 👋 אני העוזרת של שירה. שאלי אותי כל דבר על הכישורים, הפרויקטים, הניסיון שלה — או איך ליצור קשר!\n\nHi! I'm Shira's assistant. Ask me anything! 😊",
-  about: "שירה מרנשטיין היא מפתחת Full Stack המתמחה ב-Angular, React ו-C#.\n\nShe's a Software Engineering student with a **98 average grade**, currently doing a practicum at the **Israel Tax Authority**. Known for clean code, fast learning and great teamwork! 🚀",
-  skills: "הכישורים של שירה:\n\n• **Programming Languages:** JavaScript, CSS, SCSS, HTML, C++, C#, Java, React, Python, Node.js, Angular\n• **Databases:** MongoDB, SQL Server\n• **Technologies:** .NET Core, Entity Framework, WebAPI, OOP\n• **Dev Environments:** PyCharm, VS Code, Visual Studio\n• **Version Control & OS:** Git, Linux\n• **Generative AI & LLMs:** ChatGPT, Gemini, Claude, Prompt Engineering, GitHub Copilot, Amazon Q, OpenAI GPT-4o, LangChain, Pinecone",
-  projects: "שירה בנתה 9 פרויקטים! הבולטים:\n\n🥗 **B-FRESH** — Catering platform (React & Node.js)\n🎉 **Events Platform** — 360° event planning marketplace\n📚 **Bookstore** — Angular + C# full stack\n🏋️ **Gym System** — C# OOP with SQL Server\n\nלחצי על כל פרויקט בעמוד הפרויקטים לפרטים מלאים!",
-  experience: "שירה מבצעת כרגע פרקטיקום פיתוח תוכנה ב**רשות המסים** (2026–עכשיו).\n\nShe works with Angular, SQL Server, Git and Material Design — including pair programming and code reviews with her team.",
-  education: "שירה לומדת ב**סמינר בנות אלישבע** (2024–2026), הנדסת תוכנה תואר פרקטי תחת מה\"ט.\n\nממוצע ציונים: **98** · משתתפת בתוכנית Kama-Tech (UltraCode) 🏆",
-  contact: "ליצור קשר עם שירה:\n\n📧 shirameren2434@gmail.com\n💼 linkedin.com/in/shira-merenstein-b284aa403\n💻 github.com/shira2434\n\nאו השתמש/י בעמוד **Contact** באתר! 😊",
-  certifications: "לשירה 4 תעודות:\n\n✦ UX Design\n✦ AI Course\n✦ Advanced Data Security & Privacy\n✦ Kama-Tech (UltraCode) Program",
-  grade: "שירה מחזיקה ממוצע של **98** בלימודי הנדסת תוכנה בסמינר בנות אלישבע תחת מה\"ט. 🏆 מדהים!",
-  hire: "שירה פתוחה לשיתופי פעולה ופרויקטים! 🚀\n\nThe best way to reach her is:\n📧 shirameren2434@gmail.com\n\nOr use the **Contact page** on this site to send a message directly!",
-  default: "שאלה מעניינת! לא בטוח שאני יודעת לענות על זה 😅\n\nYou can explore the site or contact Shira directly at **shirameren2434@gmail.com**",
-};
+// ── RAG Knowledge Base ──
+const knowledgeBase = [
+  {
+    topic: 'about',
+    content: `שירה מרנשטיין היא מפתחת Full Stack המתמחה ב-Angular, React ו-C#. היא סטודנטית להנדסת תוכנה בסמינר בנות אלישבע עם ממוצע ציונים 98, ומבצעת פרקטיקום ברשות המסים. Shira Merenstein is a Full Stack developer specializing in Angular, React and C#. She is a Software Engineering student with a 98 average grade, currently doing a practicum at the Israel Tax Authority.`,
+  },
+  {
+    topic: 'skills',
+    content: `הכישורים של שירה: JavaScript, CSS, SCSS, HTML, C++, C#, Java, React, Python, Node.js, Angular, MongoDB, SQL Server, .NET Core, Entity Framework, WebAPI, OOP, Git, Linux, PyCharm, VS Code, Visual Studio, ChatGPT, Gemini, Claude, Prompt Engineering, GitHub Copilot, Amazon Q, OpenAI GPT-4o, LangChain, Pinecone.`,
+  },
+  {
+    topic: 'education',
+    content: `שירה לומדת בסמינר בנות אלישבע (2024–2026), הנדסת תוכנה תואר פרקטי תחת מה"ט. ממוצע ציונים: 98. משתתפת בתוכנית Kama-Tech (UltraCode).`,
+  },
+  {
+    topic: 'experience',
+    content: `שירה מבצעת פרקטיקום פיתוח תוכנה ברשות המסים (2026–עכשיו). עובדת עם Angular, SQL Server, Git ו-Material Design, כולל pair programming וcode reviews.`,
+  },
+  {
+    topic: 'certifications',
+    content: `לשירה 4 תעודות: UX Design, AI Course, Advanced Data Security & Privacy, Kama-Tech (UltraCode) Program.`,
+  },
+  {
+    topic: 'contact',
+    content: `ליצור קשר עם שירה: מייל shirameren2434@gmail.com, לינקדאין linkedin.com/in/shira-merenstein-b284aa403, גיטהאב github.com/shira2434.`,
+  },
+  {
+    topic: 'projects',
+    content: `שירה בנתה 9 פרויקטים: B-FRESH (React, Node.js) - פלטפורמת קייטרינג, Events (React, Node.js) - פלטפורמת אירועים 360 מעלות, Bookstore (Angular, C#, .NET) - חנות ספרים Full Stack, Gym System (C#, SQL Server, OOP) - מערכת ניהול חדר כושר, Hotel Booking (React, TypeScript) - מערכת הזמנת חדרים, Library Management (.NET, SQL Server) - מערכת ניהול ספרייה, Trips Project (React, API) - תכנון טיולים, Hasaot (React, Node.js), React Project (React, TypeScript).`,
+  },
+  {
+    topic: 'hire',
+    content: `שירה פתוחה לשיתופי פעולה ופרויקטים. ניתן ליצור קשר במייל shirameren2434@gmail.com או דרך עמוד Contact באתר.`,
+  },
+];
 
-// ── Email detection ──
-function detectEmail(text) {
-  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
-  return emailRegex.test(text);
-}
+// ── RAG: find relevant context ──
+function retrieveContext(userMessage) {
+  const lower = userMessage.toLowerCase();
+  const keywords = {
+    about: ['who', 'about', 'shira', 'מי', 'אודות', 'ספרי', 'שירה', 'על עצמך'],
+    skills: ['skill', 'tech', 'stack', 'language', 'כישור', 'טכנולוגי', 'שפות', 'במה'],
+    education: ['education', 'study', 'school', 'degree', 'grade', 'seminar', 'לימודים', 'ציון', 'ממוצע', 'סמינר'],
+    experience: ['experience', 'job', 'tax', 'practicum', 'intern', 'ניסיון', 'עבודה', 'מס הכנסה', 'פרקטיקום'],
+    certifications: ['certif', 'course', 'ux', 'security', 'תעודה', 'קורס', 'הסמכה'],
+    contact: ['contact', 'email', 'reach', 'hire', 'linkedin', 'קשר', 'מייל', 'linkedin'],
+    projects: ['project', 'built', 'made', 'develop', 'פרויקט', 'בנתה', 'עבודות'],
+    hire: ['hire', 'available', 'freelance', 'work together', 'זמינה', 'פנויה', 'שיתוף פעולה'],
+  };
 
-function getResponse(input) {
-  const lower = input.toLowerCase();
-  for (const [key, keywords] of Object.entries(knowledge)) {
-    if (keywords.some((kw) => lower.includes(kw))) {
-      return { type: 'text', text: responses[key] };
+  const matched = [];
+  for (const [topic, kws] of Object.entries(keywords)) {
+    if (kws.some((kw) => lower.includes(kw))) {
+      const entry = knowledgeBase.find((k) => k.topic === topic);
+      if (entry) matched.push(entry.content);
     }
   }
-  return { type: 'text', text: responses.default };
+  return matched.length > 0 ? matched.join('\n') : knowledgeBase.map((k) => k.content).join('\n');
 }
 
+// ── Function Calling: filter projects by technology ──
+function filterProjectsByTech({ tech }) {
+  const techLower = tech.toLowerCase();
+  const filtered = projectsData.filter((p) =>
+    p.tags.some((t) => t.toLowerCase().includes(techLower)) ||
+    p.fullDescription.toLowerCase().includes(techLower)
+  );
+  if (filtered.length === 0) return { found: false, tech, projects: [] };
+  return {
+    found: true,
+    tech,
+    projects: filtered.map((p) => ({ title: p.title, tags: p.tags, repo: p.repo, icon: p.icon })),
+  };
+}
+
+const tools = [
+  {
+    type: 'function',
+    function: {
+      name: 'filterProjectsByTech',
+      description: 'Filter and return projects by a specific technology or programming language',
+      parameters: {
+        type: 'object',
+        properties: {
+          tech: { type: 'string', description: 'The technology to filter by, e.g. React, Angular, C#' },
+        },
+        required: ['tech'],
+      },
+    },
+  },
+];
+
+// ── Structured Output schema ──
+const responseFormat = {
+  type: 'json_schema',
+  json_schema: {
+    name: 'chatbot_response',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        answer: { type: 'string', description: 'The response to show the user' },
+        topic: { type: 'string', description: 'The topic of the question, e.g. skills, projects, education' },
+        is_on_topic: { type: 'boolean', description: 'Whether the question is related to Shira or her portfolio' },
+      },
+      required: ['answer', 'topic', 'is_on_topic'],
+      additionalProperties: false,
+    },
+  },
+};
+
+// ── Call OpenAI ──
+async function callOpenAI(messages, useStructured = true) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages,
+      ...(useStructured ? { response_format: responseFormat } : { tools, tool_choice: 'auto' }),
+      max_tokens: 500,
+    }),
+  });
+  return res.json();
+}
+
+// ── System Prompt ──
+function buildSystemPrompt(context) {
+  return `You are Shira Merenstein's personal portfolio assistant. You ONLY answer questions about Shira — her skills, projects, experience, education, certifications, and how to contact her.
+
+If a question is NOT related to Shira or her portfolio, politely refuse and say you can only answer questions about Shira.
+
+Use the following knowledge base to answer accurately:
+${context}
+
+Rules:
+- Answer in the same language the user writes in (Hebrew or English)
+- Be friendly and professional
+- Keep answers concise
+- Never answer off-topic questions (weather, math, news, etc.)`;
+}
+
+// ── Message Component ──
 function Message({ msg }) {
   const isBot = msg.from === 'bot';
   return (
@@ -62,15 +167,12 @@ function Message({ msg }) {
         {msg.text.split('**').map((part, i) =>
           i % 2 === 1 ? <strong key={i} className="text-white">{part}</strong> : part
         )}
-        {msg.status === 'sending' && <span className="ml-2 text-xs opacity-60">sending...</span>}
-        {msg.status === 'sent' && <span className="ml-2 text-xs opacity-60">✓ sent</span>}
-        {msg.status === 'error' && <span className="ml-2 text-xs text-rose-400">✗ failed</span>}
       </div>
     </div>
   );
 }
 
-// ── Email form inside chat ──
+// ── Email Form ──
 function EmailForm({ onSend, onCancel }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -117,37 +219,30 @@ function EmailForm({ onSend, onCancel }) {
   );
 }
 
-const SUGGESTIONS = ['מי זו שירה?', 'What are her skills?', 'Show projects', 'Send a message'];
+const SUGGESTIONS = ['מי זו שירה?', 'What are her skills?', 'React projects', 'Send a message'];
 
 export default function ChatBot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     { from: 'bot', text: "שלום! 👋 אני העוזרת של שירה.\nHi! I'm Shira's assistant.\n\nAsk me anything — גם בעברית וגם באנגלית! 😊" }
   ]);
+  const [history, setHistory] = useState([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [unread, setUnread] = useState(1);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const bottomRef = useRef(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typing, showEmailForm]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typing, showEmailForm]);
+  useEffect(() => { if (open) setUnread(0); }, [open]);
 
-  useEffect(() => {
-    if (open) setUnread(0);
-  }, [open]);
+  const addBotMessage = useCallback((text) => setMessages((prev) => [...prev, { from: 'bot', text }]), []);
 
-  const addBotMessage = (text) => {
-    setMessages((prev) => [...prev, { from: 'bot', text }]);
-  };
-
-  const send = (text) => {
+  const send = useCallback(async (text) => {
     const userMsg = text || input.trim();
     if (!userMsg) return;
     setInput('');
 
-    // Check if user wants to send email
     if (['send a message', 'contact', 'email', 'מייל', 'שלח הודעה', 'ליצור קשר'].some(kw => userMsg.toLowerCase().includes(kw))) {
       setMessages((prev) => [...prev, { from: 'user', text: userMsg }]);
       setShowEmailForm(true);
@@ -156,30 +251,78 @@ export default function ChatBot() {
 
     setMessages((prev) => [...prev, { from: 'user', text: userMsg }]);
     setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      const res = getResponse(userMsg);
-      addBotMessage(res.text);
-      if (!open) setUnread((n) => n + 1);
-    }, 600 + Math.random() * 400);
-  };
 
-  const handleEmailSent = (success) => {
+    try {
+      const context = retrieveContext(userMsg);
+      const systemPrompt = buildSystemPrompt(context);
+      const newHistory = [...history, { role: 'user', content: userMsg }];
+
+      // Step 1: check for function calls (no structured output)
+      const data = await callOpenAI([
+        { role: 'system', content: systemPrompt },
+        ...newHistory,
+      ], false);
+
+      const choice = data.choices?.[0];
+      let finalText;
+
+      if (choice?.message?.tool_calls) {
+        // Function calling path
+        const toolCall = choice.message.tool_calls[0];
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = filterProjectsByTech(args);
+
+        const toolMessages = [
+          ...newHistory,
+          choice.message,
+          { role: 'tool', tool_call_id: toolCall.id, content: JSON.stringify(result) },
+        ];
+
+        // Step 2: get structured output after function result
+        const data2 = await callOpenAI([
+          { role: 'system', content: systemPrompt },
+          ...toolMessages,
+        ], true);
+
+        const parsed = JSON.parse(data2.choices?.[0]?.message?.content || '{}');
+        finalText = parsed.answer || 'לא הצלחתי למצוא תשובה.';
+        setHistory([...toolMessages, { role: 'assistant', content: finalText }]);
+      } else {
+        // Structured output path
+        const data2 = await callOpenAI([
+          { role: 'system', content: systemPrompt },
+          ...newHistory,
+        ], true);
+
+        const parsed = JSON.parse(data2.choices?.[0]?.message?.content || '{}');
+        finalText = parsed.answer || 'לא הצלחתי למצוא תשובה.';
+        setHistory([...newHistory, { role: 'assistant', content: finalText }]);
+        if (!open) setUnread((n) => n + 1);
+      }
+
+      setTyping(false);
+      addBotMessage(finalText);
+    } catch {
+      setTyping(false);
+      addBotMessage('❌ שגיאה בחיבור. נסי שוב.');
+    }
+  }, [history, open, input, addBotMessage]);
+
+  const handleEmailSent = useCallback((success) => {
     setShowEmailForm(false);
     addBotMessage(
       success
         ? '✅ ההודעה נשלחה לשירה! היא תחזור אליך בהקדם 😊\nMessage sent to Shira! She\'ll get back to you soon.'
         : '❌ משהו השתבש. נסה שוב או שלח ישירות ל-shirameren2434@gmail.com'
     );
-  };
+  }, [addBotMessage]);
 
-  const handleKey = (e) => {
+  const handleKey = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  };
+  }, [send]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-
       {open && (
         <div className="flex w-80 sm:w-96 flex-col overflow-hidden rounded-3xl border border-slate-700/50 bg-slate-900/95 shadow-2xl shadow-slate-950/80 backdrop-blur-2xl animate-slide-up"
           style={{ height: '540px' }}>
