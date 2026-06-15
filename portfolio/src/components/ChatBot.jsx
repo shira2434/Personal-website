@@ -137,7 +137,7 @@ async function callOpenAI(messages, extraParams = {}) {
 function buildSystemPrompt(context) {
   return `You are Shira Merenstein's personal portfolio assistant. You ONLY answer questions about Shira — her skills, projects, experience, education, certifications, and how to contact her.
 
-If a question is NOT related to Shira or her portfolio, politely refuse and say you can only answer questions about Shira.
+If a question is NOT related to Shira or her portfolio, politely refuse and say: "סליחה, אבל אני יכול רק לענות על שאלות לגבי שירה מרנשטיין."
 
 Use the following knowledge base to answer accurately:
 ${context}
