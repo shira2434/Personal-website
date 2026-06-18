@@ -19,13 +19,14 @@ export default function ProjectDetail() {
   const next = projectsData[currentIndex + 1];
 
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
-  // משתנה בוליאני פשוט - האם המודל פתוח או סגור
   const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [mediaTab, setMediaTab] = useState('photos');
 
   useEffect(() => { 
     window.scrollTo(0, 0); 
     setCurrentImgIndex(0);
     setIsZoomOpen(false);
+    setMediaTab('photos');
   }, [id]);
 
   if (!project) {
@@ -104,10 +105,34 @@ export default function ProjectDetail() {
       <div className="mx-auto max-w-5xl px-6 py-16 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] items-start">
 
-          {/* Screenshots קרוסלה */}
+          {/* Screenshots + Video */}
           <div className="space-y-5">
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Screenshots</p>
-            {project.images && project.images.length > 0 ? (
+            {project.images?.length > 0 && project.video && (
+              <div className="flex gap-2">
+                <button onClick={() => setMediaTab('photos')}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                    mediaTab === 'photos' ? 'border-sky-400/50 bg-sky-500/10 text-sky-300' : 'border-slate-700 text-slate-500 hover:text-white'
+                  }`}>📸 Photos</button>
+                <button onClick={() => setMediaTab('video')}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                    mediaTab === 'video' ? 'border-sky-400/50 bg-sky-500/10 text-sky-300' : 'border-slate-700 text-slate-500 hover:text-white'
+                  }`}>🎬 Video</button>
+              </div>
+            )}
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">
+              {mediaTab === 'video' ? 'Demo Video' : 'Screenshots'}
+            </p>
+            {project.video && (mediaTab === 'video' || !project.images?.length) ? (
+              <div className="overflow-hidden rounded-2xl border border-slate-800 shadow-2xl shadow-slate-950/50 aspect-video">
+                {project.video.includes('youtube.com') || project.video.includes('youtu.be') ? (
+                  <iframe src={project.video} className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen />
+                ) : (
+                  <video src={project.video} controls className="w-full h-full object-cover" />
+                )}
+              </div>
+            ) : project.images && project.images.length > 0 ? (
               <div className="space-y-4">
                 <div 
                   onClick={() => setIsZoomOpen(true)}
