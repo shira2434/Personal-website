@@ -24,7 +24,7 @@ export function ProjectsProvider({ children }) {
     ...p,
     images: mediaOverrides[p.id]?.images || p.images,
     video: mediaOverrides[p.id]?.video || p.video,
-    live: mediaOverrides[p.id]?.live || p.live,
+    live: (mediaOverrides[p.id]?.live && mediaOverrides[p.id].live !== '#') ? mediaOverrides[p.id].live : p.live,
   }));
 
   function addProject(project) {
