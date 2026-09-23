@@ -39,6 +39,7 @@ export default function Admin() {
   const [selectedId, setSelectedId] = useState('');
   const [editImages, setEditImages] = useState([]);
   const [editVideo, setEditVideo] = useState('');
+  const [editLive, setEditLive] = useState('');
   const [editUrlInput, setEditUrlInput] = useState('');
   const [mediaSaved, setMediaSaved] = useState(false);
 
@@ -48,6 +49,7 @@ export default function Admin() {
     if (!selectedProject) return;
     setEditImages(selectedProject.images || []);
     setEditVideo(selectedProject.video || '');
+    setEditLive(selectedProject.live === '#' ? '' : selectedProject.live || '');
     setEditUrlInput('');
   }, [selectedId]);
 
@@ -77,7 +79,7 @@ export default function Admin() {
     if (hasBlobs) {
       alert('⚠️ Images uploaded from your computer are temporary and will disappear after refresh.\nTo keep them permanently, use an image URL (e.g. from Imgur or Cloudinary).');
     }
-    updateMedia(selectedId, persistable, editVideo.startsWith('blob:') ? '' : editVideo);
+    updateMedia(selectedId, persistable, editVideo.startsWith('blob:') ? '' : editVideo, editLive || '#');
     setMediaSaved(true);
     setTimeout(() => {
       setMediaSaved(false);
@@ -257,6 +259,19 @@ export default function Admin() {
                   ✅ Media saved! Changes are live on the site.
                 </div>
               )}
+
+              {/* Live URL */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">🌐 Live Demo URL</p>
+                <Field label="Paste the live site URL">
+                  <input value={editLive} onChange={(e) => setEditLive(e.target.value)}
+                    placeholder="https://..." className={inputCls} />
+                </Field>
+                {editLive && (
+                  <a href={editLive} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-200 transition">Preview ↗</a>
+                )}
+              </div>
 
               {/* Images */}
               <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">

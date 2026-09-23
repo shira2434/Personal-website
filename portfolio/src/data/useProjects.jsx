@@ -24,6 +24,7 @@ export function ProjectsProvider({ children }) {
     ...p,
     images: mediaOverrides[p.id]?.images || p.images,
     video: mediaOverrides[p.id]?.video || p.video,
+    live: mediaOverrides[p.id]?.live || p.live,
   }));
 
   function addProject(project) {
@@ -38,8 +39,8 @@ export function ProjectsProvider({ children }) {
     setCustom(updated);
   }
 
-  function updateMedia(id, images, video) {
-    const updated = { ...mediaOverrides, [id]: { images, video } };
+  function updateMedia(id, images, video, live) {
+    const updated = { ...mediaOverrides, [id]: { images, video, live } };
     localStorage.setItem(MEDIA_KEY, JSON.stringify(updated));
     setMediaOverrides(updated);
   }
