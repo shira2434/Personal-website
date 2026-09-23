@@ -53,9 +53,8 @@ export default function Admin() {
 
   function handleEditImageFiles(e) {
     Array.from(e.target.files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => setEditImages((prev) => [...prev, ev.target.result]);
-      reader.readAsDataURL(file);
+      const url = URL.createObjectURL(file);
+      setEditImages((prev) => [...prev, url]);
     });
   }
 
@@ -68,13 +67,17 @@ export default function Admin() {
   function handleVideoFile(e) {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setEditVideo(ev.target.result);
-    reader.readAsDataURL(file);
+    setEditVideo(URL.createObjectURL(file));
   }
 
   function saveMedia() {
-    updateMedia(selectedId, editImages, editVideo);
+    // blob: URLs are temporary (lost on refresh) — filter them out before saving
+    const persistable = editImages.filter((src) => !src.startsWith('blob:'));
+    const hasBlobs = editImages.some((src) => src.startsWith('blob:'));
+    if (hasBlobs) {
+      alert('⚠️ Images uploaded from your computer are temporary and will disappear after refresh.\nTo keep them permanently, use an image URL (e.g. from Imgur or Cloudinary).');
+    }
+    updateMedia(selectedId, persistable, editVideo.startsWith('blob:') ? '' : editVideo);
     setMediaSaved(true);
     setTimeout(() => {
       setMediaSaved(false);
@@ -87,13 +90,8 @@ export default function Admin() {
   }
 
   function handleImageFiles(e) {
-    const files = Array.from(e.target.files);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setForm((f) => ({ ...f, images: [...f.images, ev.target.result] }));
-      };
-      reader.readAsDataURL(file);
+    Array.from(e.target.files).forEach((file) => {
+      setForm((f) => ({ ...f, images: [...f.images, URL.createObjectURL(file)] }));
     });
   }
 
@@ -283,7 +281,7 @@ export default function Admin() {
 
                 {/* Upload from computer */}
                 <div>
-                  <p className="text-xs text-slate-500 mb-1.5">Upload from computer</p>
+                  <p className="text-xs text-slate-500 mb-1.5">Upload from computer <span className="text-amber-500">(preview only — use URL for permanent storage)</span></p>
                   <input type="file" accept="image/*" multiple onChange={handleEditImageFiles}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900/60 p-3 text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-sky-500/20 file:px-4 file:py-1 file:text-xs file:font-semibold file:text-sky-300 hover:file:bg-sky-500/30 transition" />
                 </div>
@@ -307,7 +305,7 @@ export default function Admin() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">🎬 Video</p>
 
                 <div>
-                  <p className="text-xs text-slate-500 mb-1.5">Upload video from computer</p>
+                  <p className="text-xs text-slate-500 mb-1.5">Upload video from computer <span className="text-amber-500">(preview only — use URL for permanent storage)</span></p>
                   <input type="file" accept="video/*" onChange={handleVideoFile}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900/60 p-3 text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-sky-500/20 file:px-4 file:py-1 file:text-xs file:font-semibold file:text-sky-300 hover:file:bg-sky-500/30 transition" />
                 </div>
