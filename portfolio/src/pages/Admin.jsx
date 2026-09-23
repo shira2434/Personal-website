@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../data/useProjects';
 
@@ -28,12 +28,48 @@ const EMPTY = {
 };
 
 export default function Admin() {
-  const { allProjects, addProject, deleteProject, customCount } = useProjects();
+  const { allProjects, addProject, deleteProject, updateMedia, customCount } = useProjects();
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY);
   const [imageUrls, setImageUrls] = useState('');
   const [success, setSuccess] = useState(false);
-  const [tab, setTab] = useState('add'); // 'add' | 'manage'
+  const [tab, setTab] = useState('add'); // 'add' | 'manage' | 'media'
+
+  // media edit state
+  const [selectedId, setSelectedId] = useState('');
+  const [editImages, setEditImages] = useState([]);
+  const [editVideo, setEditVideo] = useState('');
+  const [editUrlInput, setEditUrlInput] = useState('');
+  const [mediaSaved, setMediaSaved] = useState(false);
+
+  const selectedProject = allProjects.find((p) => p.id === selectedId);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+    setEditImages(selectedProject.images || []);
+    setEditVideo(selectedProject.video || '');
+    setEditUrlInput('');
+  }, [selectedId]);
+
+  function handleEditImageFiles(e) {
+    Array.from(e.target.files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => setEditImages((prev) => [...prev, ev.target.result]);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function addEditUrls() {
+    const urls = editUrlInput.split('\n').map((u) => u.trim()).filter(Boolean);
+    setEditImages((prev) => [...prev, ...urls]);
+    setEditUrlInput('');
+  }
+
+  function saveMedia() {
+    updateMedia(selectedId, editImages, editVideo);
+    setMediaSaved(true);
+    setTimeout(() => setMediaSaved(false), 3000);
+  }
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -89,14 +125,14 @@ export default function Admin() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-8">
-        {['add', 'manage'].map((t) => (
+        {['add', 'media', 'manage'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`rounded-full border px-5 py-2 text-sm font-semibold transition ${
               tab === t
                 ? 'border-sky-400/50 bg-sky-500/10 text-sky-300'
                 : 'border-slate-700 text-slate-400 hover:text-white'
             }`}>
-            {t === 'add' ? '+ Add Project' : '📋 Manage'}
+            {t === 'add' ? '+ Add Project' : t === 'media' ? '🖼 Edit Media' : '📋 Manage'}
           </button>
         ))}
       </div>
@@ -191,6 +227,95 @@ export default function Admin() {
             + Add Project to Portfolio
           </button>
         </form>
+      )}
+
+      {/* ── MEDIA TAB ── */}
+      {tab === 'media' && (
+        <div className="space-y-6">
+          <Field label="Select Project">
+            <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className={inputCls}>
+              <option value="">— choose a project —</option>
+              {allProjects.map((p) => (
+                <option key={p.id} value={p.id}>{p.num}. {p.title}</option>
+              ))}
+            </select>
+          </Field>
+
+          {selectedProject && (
+            <>
+              {mediaSaved && (
+                <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-400">
+                  ✅ Media saved! Changes are live on the site.
+                </div>
+              )}
+
+              {/* Images */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">📸 Images ({editImages.length})</p>
+
+                {/* Existing images grid */}
+                {editImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {editImages.map((src, i) => (
+                      <div key={i} className="relative group">
+                        <img src={src} alt="" className="h-20 w-full rounded-xl object-cover border border-slate-700" />
+                        <button type="button"
+                          onClick={() => setEditImages((prev) => prev.filter((_, j) => j !== i))}
+                          className="absolute -top-1.5 -right-1.5 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs shadow">
+                          ×
+                        </button>
+                        <span className="absolute bottom-1 left-1 rounded bg-slate-950/70 px-1 text-[10px] text-slate-400">{i + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload from computer */}
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Upload from computer</p>
+                  <input type="file" accept="image/*" multiple onChange={handleEditImageFiles}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/60 p-3 text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-sky-500/20 file:px-4 file:py-1 file:text-xs file:font-semibold file:text-sky-300 hover:file:bg-sky-500/30 transition" />
+                </div>
+
+                {/* Add by URL */}
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Add by URL (one per line)</p>
+                  <div className="flex gap-2">
+                    <textarea rows={2} value={editUrlInput} onChange={(e) => setEditUrlInput(e.target.value)}
+                      placeholder="https://example.com/image.png" className={inputCls + ' flex-1'} />
+                    <button type="button" onClick={addEditUrls}
+                      className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 text-sm text-sky-300 hover:bg-sky-500/20 transition shrink-0">
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Video */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">🎬 Video</p>
+                <Field label="YouTube embed URL or direct .mp4 link">
+                  <input value={editVideo} onChange={(e) => setEditVideo(e.target.value)}
+                    placeholder="https://www.youtube.com/embed/..." className={inputCls} />
+                </Field>
+                {editVideo && (
+                  <div className="overflow-hidden rounded-xl border border-slate-700 aspect-video">
+                    {editVideo.includes('youtube') || editVideo.includes('youtu.be') ? (
+                      <iframe src={editVideo} className="w-full h-full" allowFullScreen />
+                    ) : (
+                      <video src={editVideo} controls className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button onClick={saveMedia}
+                className="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 transition hover:opacity-90">
+                💾 Save Media
+              </button>
+            </>
+          )}
+        </div>
       )}
 
       {/* ── MANAGE TAB ── */}
