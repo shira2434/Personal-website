@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+
+const ADMIN_CODE = '1234';
 
 const navItems = [
   { to: '/', label: 'Home' },
@@ -13,7 +15,24 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [showCodePrompt, setShowCodePrompt] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  function handleAdminSubmit(e) {
+    e.preventDefault();
+    if (code === ADMIN_CODE) {
+      setShowCodePrompt(false);
+      setCode('');
+      setCodeError(false);
+      navigate('/admin');
+    } else {
+      setCodeError(true);
+      setCode('');
+    }
+  }
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 30);
@@ -76,6 +95,13 @@ export default function Navbar() {
               Hire Me
               <span className="gradient-text-warm font-black">✦</span>
             </Link>
+
+            {/* Hidden admin button */}
+            <button onClick={() => { setShowCodePrompt(true); setCodeError(false); setCode(''); }}
+              className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-slate-700 hover:text-slate-400 transition"
+              title="Admin">
+              ⚙️
+            </button>
           </div>
 
           {/* Mobile hamburger */}
@@ -86,6 +112,37 @@ export default function Navbar() {
             <span className={`block h-0.5 w-6 rounded-full bg-white transition-all duration-300 origin-center ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
           </button>
         </div>
+
+        {/* Admin code prompt */}
+        {showCodePrompt && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+            onClick={() => setShowCodePrompt(false)}>
+            <form onSubmit={handleAdminSubmit}
+              onClick={(e) => e.stopPropagation()}
+              className="w-72 rounded-3xl border border-slate-700 bg-slate-900 p-8 shadow-2xl space-y-5">
+              <div className="text-center">
+                <span className="text-3xl">🔐</span>
+                <p className="mt-2 text-sm font-semibold text-white">Admin Access</p>
+                <p className="text-xs text-slate-500 mt-1">Enter your code to continue</p>
+              </div>
+              <input
+                autoFocus
+                type="password"
+                value={code}
+                onChange={(e) => { setCode(e.target.value); setCodeError(false); }}
+                placeholder="••••"
+                className={`w-full rounded-xl border px-4 py-3 text-center text-lg tracking-[0.5em] bg-slate-950 text-white outline-none transition ${
+                  codeError ? 'border-red-500/60 animate-shake' : 'border-slate-700 focus:border-sky-500/50'
+                }`}
+              />
+              {codeError && <p className="text-xs text-red-400 text-center">Incorrect code</p>}
+              <button type="submit"
+                className="w-full rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 py-2.5 text-sm font-bold text-white hover:opacity-90 transition">
+                Enter
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Mobile drawer */}
         <div className={`md:hidden overflow-hidden transition-all duration-400 ${menuOpen ? 'max-h-96' : 'max-h-0'}`}>
