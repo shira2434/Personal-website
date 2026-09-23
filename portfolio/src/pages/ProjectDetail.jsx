@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useProjects } from '../data/useProjects';
+import { useProjects } from '../data/useProjects.jsx';
 import ImageZoomModal from '../components/ImageZoomModal';
 
 function GitHubIcon() {

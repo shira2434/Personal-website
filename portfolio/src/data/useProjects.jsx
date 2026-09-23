@@ -1,20 +1,18 @@
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { projectsData } from './projects';
 
 const STORAGE_KEY = 'custom_projects';
 const MEDIA_KEY = 'project_media_overrides';
 
-function load(key) {
-  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch { return {}; }
+function load(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; }
 }
 
-function loadCustom() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
-}
+const ProjectsContext = createContext(null);
 
-export function useProjects() {
-  const [custom, setCustom] = useState(loadCustom);
-  const [mediaOverrides, setMediaOverrides] = useState(() => load(MEDIA_KEY));
+export function ProjectsProvider({ children }) {
+  const [custom, setCustom] = useState(() => load(STORAGE_KEY, []));
+  const [mediaOverrides, setMediaOverrides] = useState(() => load(MEDIA_KEY, {}));
 
   const allProjects = [
     ...projectsData,
@@ -46,5 +44,13 @@ export function useProjects() {
     setMediaOverrides(updated);
   }
 
-  return { allProjects, addProject, deleteProject, updateMedia, customCount: custom.length };
+  return (
+    <ProjectsContext.Provider value={{ allProjects, addProject, deleteProject, updateMedia, customCount: custom.length }}>
+      {children}
+    </ProjectsContext.Provider>
+  );
+}
+
+export function useProjects() {
+  return useContext(ProjectsContext);
 }

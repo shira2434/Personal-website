@@ -10,6 +10,7 @@ import Experience from './pages/Experience';
 import Contact from './pages/Contact';
 import ChatBot from './components/ChatBot';
 import Admin from './pages/Admin';
+import { ProjectsProvider } from './data/useProjects.jsx';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -20,6 +21,7 @@ function ScrollToTop() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ProjectsProvider>
       <ScrollToTop />
       <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-sky-200 selection:text-slate-900">
         <Navbar />
@@ -37,6 +39,7 @@ export default function App() {
         <Footer />
         <ChatBot />
       </div>
+      </ProjectsProvider>
     </BrowserRouter>
   );
 }

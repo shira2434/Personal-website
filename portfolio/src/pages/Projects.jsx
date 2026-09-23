@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useProjects } from '../data/useProjects';
+import { useProjects } from '../data/useProjects.jsx';
 
 const categories = ['All', 'React', 'Angular', 'C#', '.NET', 'API'];
 

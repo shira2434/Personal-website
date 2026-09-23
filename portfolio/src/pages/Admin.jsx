@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useProjects } from '../data/useProjects';
+import { useProjects } from '../data/useProjects.jsx';
 
 const GRADIENTS = [
   'from-sky-500/20 to-cyan-500/20',
