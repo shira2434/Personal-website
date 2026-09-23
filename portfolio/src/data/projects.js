@@ -214,6 +214,11 @@ export const projectsData = [
       'Chatbot with typing indicator and quick-reply buttons',
       'Data export/import via JSON backup and restore',
     ],
-    images: [],
+    images: [
+      new URL('../assets/projects/arch-1.png', import.meta.url).href,
+      new URL('../assets/projects/arch-2.png', import.meta.url).href,
+      new URL('../assets/projects/arch-3.png', import.meta.url).href,
+    ],
+    video: new URL('../assets/projects/arch-video.mp4', import.meta.url).href,
   },
 ];
