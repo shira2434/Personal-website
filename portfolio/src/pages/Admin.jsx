@@ -65,10 +65,21 @@ export default function Admin() {
     setEditUrlInput('');
   }
 
+  function handleVideoFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setEditVideo(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
   function saveMedia() {
     updateMedia(selectedId, editImages, editVideo);
     setMediaSaved(true);
-    setTimeout(() => setMediaSaved(false), 3000);
+    setTimeout(() => {
+      setMediaSaved(false);
+      navigate(`/projects/${selectedId}`);
+    }, 1000);
   }
 
   function set(field, value) {
@@ -292,18 +303,34 @@ export default function Admin() {
               </div>
 
               {/* Video */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">🎬 Video</p>
-                <Field label="YouTube embed URL or direct .mp4 link">
-                  <input value={editVideo} onChange={(e) => setEditVideo(e.target.value)}
-                    placeholder="https://www.youtube.com/embed/..." className={inputCls} />
+
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Upload video from computer</p>
+                  <input type="file" accept="video/*" onChange={handleVideoFile}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/60 p-3 text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-sky-500/20 file:px-4 file:py-1 file:text-xs file:font-semibold file:text-sky-300 hover:file:bg-sky-500/30 transition" />
+                </div>
+
+                <Field label="Or paste YouTube / .mp4 URL">
+                  <div className="flex gap-2">
+                    <input value={editVideo} onChange={(e) => setEditVideo(e.target.value)}
+                      placeholder="https://www.youtube.com/embed/..." className={inputCls + ' flex-1'} />
+                    {editVideo && (
+                      <button type="button" onClick={() => setEditVideo('')}
+                        className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 text-xs text-red-400 hover:bg-red-500/20 transition shrink-0">
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </Field>
+
                 {editVideo && (
                   <div className="overflow-hidden rounded-xl border border-slate-700 aspect-video">
-                    {editVideo.includes('youtube') || editVideo.includes('youtu.be') ? (
-                      <iframe src={editVideo} className="w-full h-full" allowFullScreen />
-                    ) : (
+                    {editVideo.startsWith('data:') || (!editVideo.includes('youtube') && !editVideo.includes('youtu.be')) ? (
                       <video src={editVideo} controls className="w-full h-full object-cover" />
+                    ) : (
+                      <iframe src={editVideo} className="w-full h-full" allowFullScreen />
                     )}
                   </div>
                 )}
