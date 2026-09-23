@@ -9,6 +9,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import Experience from './pages/Experience';
 import Contact from './pages/Contact';
 import ChatBot from './components/ChatBot';
+import Admin from './pages/Admin';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/experience" element={<Experience />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
         <Footer />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { projectsData } from '../data/projects';
+import { useProjects } from '../data/useProjects';
 import ImageZoomModal from '../components/ImageZoomModal';
 
 function GitHubIcon() {
@@ -13,10 +13,11 @@ function GitHubIcon() {
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const project = projectsData.find((p) => p.id === id);
-  const currentIndex = projectsData.findIndex((p) => p.id === id);
-  const prev = projectsData[currentIndex - 1];
-  const next = projectsData[currentIndex + 1];
+  const { allProjects } = useProjects();
+  const project = allProjects.find((p) => p.id === id);
+  const currentIndex = allProjects.findIndex((p) => p.id === id);
+  const prev = allProjects[currentIndex - 1];
+  const next = allProjects[currentIndex + 1];
 
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [isZoomOpen, setIsZoomOpen] = useState(false);

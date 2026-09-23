@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { projectsData } from '../data/projects';
+import { useProjects } from '../data/useProjects';
 
 const categories = ['All', 'React', 'Angular', 'C#', '.NET', 'API'];
 
@@ -9,15 +9,17 @@ export default function Projects() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState('grid'); // 'grid' | 'list'
 
+  const { allProjects } = useProjects();
+
   const filtered = useMemo(() =>
-    projectsData.filter((p) => {
+    allProjects.filter((p) => {
       const matchCat = activeCategory === 'All' || p.tags.some((t) => t === activeCategory);
       const matchSearch = search === '' ||
         p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
       return matchCat && matchSearch;
     }),
-    [activeCategory, search]
+    [activeCategory, search, allProjects]
   );
 
   return (
@@ -87,7 +89,7 @@ export default function Projects() {
 
         {/* Count */}
         <p className="mb-6 text-xs text-slate-600">
-          Showing <span className="text-sky-400 font-semibold">{filtered.length}</span> of {projectsData.length} projects
+          Showing <span className="text-sky-400 font-semibold">{filtered.length}</span> of {allProjects.length} projects
         </p>
 
         {/* Grid view */}
