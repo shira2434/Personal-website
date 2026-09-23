@@ -28,7 +28,7 @@ const EMPTY = {
 };
 
 export default function Admin() {
-  const { allProjects, addProject, deleteProject, updateMedia, customCount } = useProjects();
+  const { allProjects, addProject, deleteProject, updateMedia, resetMedia, customCount } = useProjects();
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY);
   const [imageUrls, setImageUrls] = useState('');
@@ -334,10 +334,16 @@ export default function Admin() {
                 )}
               </div>
 
+              <div className="flex gap-2">
               <button onClick={saveMedia}
-                className="w-full rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 transition hover:opacity-90">
+                className="flex-1 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 transition hover:opacity-90">
                 💾 Save Media
               </button>
+              <button onClick={() => { resetMedia(selectedId); setSelectedId(''); }}
+                className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3 text-sm font-semibold text-red-400 hover:bg-red-500/20 transition">
+                Reset to Default
+              </button>
+              </div>
             </>
           )}
         </div>

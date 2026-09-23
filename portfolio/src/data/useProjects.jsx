@@ -22,8 +22,8 @@ export function ProjectsProvider({ children }) {
     })),
   ].map((p) => ({
     ...p,
-    images: mediaOverrides[p.id]?.images ?? p.images,
-    video: mediaOverrides[p.id]?.video ?? p.video,
+    images: mediaOverrides[p.id]?.images || p.images,
+    video: mediaOverrides[p.id]?.video || p.video,
   }));
 
   function addProject(project) {
@@ -44,8 +44,15 @@ export function ProjectsProvider({ children }) {
     setMediaOverrides(updated);
   }
 
+  function resetMedia(id) {
+    const updated = { ...mediaOverrides };
+    delete updated[id];
+    localStorage.setItem(MEDIA_KEY, JSON.stringify(updated));
+    setMediaOverrides(updated);
+  }
+
   return (
-    <ProjectsContext.Provider value={{ allProjects, addProject, deleteProject, updateMedia, customCount: custom.length }}>
+    <ProjectsContext.Provider value={{ allProjects, addProject, deleteProject, updateMedia, resetMedia, customCount: custom.length }}>
       {children}
     </ProjectsContext.Provider>
   );
