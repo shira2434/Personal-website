@@ -95,7 +95,6 @@ export const projectsData = [
       new URL('../assets/projects/Hotel-Booking4.png.png', import.meta.url).href,
       new URL('../assets/projects/Hotel-Booking5.png.png', import.meta.url).href,
       new URL('../assets/projects/Hotel-Booking6.png.png', import.meta.url).href,
-      new URL('../assets/projects/Hotel-Booking7.png.png', import.meta.url).href,
     ],
   },
   {
