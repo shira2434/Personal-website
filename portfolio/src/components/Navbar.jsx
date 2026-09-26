@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-const ADMIN_CODE = '1234';
+const ADMIN_CODE = import.meta.env.VITE_ADMIN_CODE ?? '2434';
 
 const navItems = [
   { to: '/', label: 'Home' },

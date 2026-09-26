@@ -114,24 +114,32 @@ function Spotlight() {
 /* ── Animated counter ── */
 function Counter({ value, label, icon, color }) {
   const [count, setCount] = useState(0);
+  const ref = useRef(null);
   const num = parseInt(value);
   const hasPlus = value.includes('+');
 
   useEffect(() => {
-    let start = 0;
-    const end = num;
-    const duration = 1800;
-    const step = Math.ceil(duration / end);
-    const timer = setInterval(() => {
-      start += 1;
-      setCount(start);
-      if (start >= end) clearInterval(timer);
-    }, step);
-    return () => clearInterval(timer);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        let start = 0;
+        const duration = 1800;
+        const step = Math.ceil(duration / num);
+        const timer = setInterval(() => {
+          start += 1;
+          setCount(start);
+          if (start >= num) clearInterval(timer);
+        }, step);
+      },
+      { threshold: 0.5 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
   }, [num]);
 
   return (
-    <div className="card-glow border-glow glass group relative overflow-hidden rounded-2xl p-6 text-center cursor-default">
+    <div ref={ref} className="card-glow border-glow glass group relative overflow-hidden rounded-2xl p-6 text-center cursor-default">
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 transition-opacity duration-500 group-hover:opacity-5`} />
       <div className={`absolute -top-4 -right-4 h-16 w-16 rounded-full bg-gradient-to-br ${color} opacity-5 blur-xl transition-all duration-500 group-hover:opacity-20 group-hover:scale-150`} />
       <span className={`text-2xl bg-gradient-to-r ${color} bg-clip-text text-transparent`}>{icon}</span>

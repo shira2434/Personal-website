@@ -19,10 +19,10 @@ export default function Contact() {
     setError(false);
     try {
       await emailjs.send(
-        'service_lc4hkpw',
-        'template_a9gdb1m',
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
         { name: form.name, email: form.email, message: form.message, title: 'Portfolio Contact' },
-        'Msl7gvtuWwferlS3G'
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
       setSent(true);
       setForm({ name: '', email: '', message: '' });
