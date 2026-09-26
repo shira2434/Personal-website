@@ -184,10 +184,10 @@ function EmailForm({ onSend, onCancel }) {
     setSending(true);
     try {
       await emailjs.send(
-        'service_lc4hkpw',
-        'template_a9gdb1m',
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
         { name, email, message, title: 'Portfolio Chatbot' },
-        'Msl7gvtuWwferlS3G'
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
       onSend(true);
     } catch {
